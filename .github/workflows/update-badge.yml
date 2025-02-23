@@ -1,0 +1,41 @@
+name: Update Badge
+
+on:
+  workflow_dispatch:
+    inputs:
+      status:
+        description: "バッジに表示する文字列"
+        required: true
+        default: "success"
+      color:
+        description: "バッジの色"
+        required: true
+        default: "brightgreen"
+        type: choice
+        options:
+          - brightgreen
+          - red
+          - yellow
+          - blue
+
+jobs:
+  update-badge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate SVG
+        run: |
+          mkdir -p badges
+          cat > badges/status.svg << EOF
+          <svg xmlns="http://www.w3.org/2000/svg" width="120" height="20">
+            <rect width="120" height="20" fill="${{ github.event.inputs.color }}" />
+            <text x="60" y="14" fill="white" font-size="12" text-anchor="middle">${{ github.event.inputs.status }}</text>
+          </svg>
+          EOF
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./badges
