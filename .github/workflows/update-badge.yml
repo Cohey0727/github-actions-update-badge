@@ -3,8 +3,12 @@ name: Update Badge
 on:
   workflow_dispatch:
     inputs:
-      status:
-        description: "バッジに表示する文字列"
+      text:
+        description: "バッジのテキスト"
+        required: true
+        default: "status"
+      message:
+        description: "バッジのメッセージ"
         required: true
         default: "success"
       color:
@@ -17,6 +21,18 @@ on:
           - red
           - yellow
           - blue
+          - green
+      style:
+        description: "バッジのスタイル"
+        required: true
+        default: "flat"
+        type: choice
+        options:
+          - flat
+          - flat-square
+          - plastic
+          - for-the-badge
+          - social
 
 jobs:
   update-badge:
@@ -24,15 +40,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Generate SVG
+      - name: Download badge from shields.io
         run: |
           mkdir -p badges
-          cat > badges/status.svg << EOF
-          <svg xmlns="http://www.w3.org/2000/svg" width="120" height="20">
-            <rect width="120" height="20" fill="${{ github.event.inputs.color }}" />
-            <text x="60" y="14" fill="white" font-size="12" text-anchor="middle">${{ github.event.inputs.status }}</text>
-          </svg>
-          EOF
+          # URLエンコード
+          TEXT=$(echo "${{ github.event.inputs.text }}" | sed 's/ /_/g')
+          MESSAGE=$(echo "${{ github.event.inputs.message }}" | sed 's/ /_/g')
+
+          # shields.ioからバッジをダウンロード
+          curl -o badges/status.svg \
+            "https://img.shields.io/badge/$TEXT-$MESSAGE-${{ github.event.inputs.color }}?style=${{ github.event.inputs.style }}"
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
